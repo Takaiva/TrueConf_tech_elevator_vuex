@@ -1,26 +1,44 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div class="wrapper">
+    <AppOptions/>
+    <Shaft/>
+  </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue';
+// import {
+//   mapState, mapMutations, mapGetters, mapActions,
+// } from 'vuex';
+import AppOptions from '@/components/AppOptions.vue';
+import Shaft from '@/components/ShaftComponent.vue';
 
 export default {
-  name: 'App',
   components: {
-    HelloWorld,
+    AppOptions, Shaft,
+  },
+  data() {
+    return {
+
+    };
   },
 };
 </script>
 
 <style lang="scss">
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
+
+body {
+  min-height: 100vh;
+  width: 100%;
+  background: #393e46;
+}
+
+.wrapper {
+  margin: 10px;
+}
+
 </style>

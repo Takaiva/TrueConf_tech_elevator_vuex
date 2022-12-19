@@ -9,17 +9,12 @@
 // import {
 //   mapState, mapMutations, mapGetters, mapActions,
 // } from 'vuex';
-import AppOptions from '@/components/AppOptions.vue';
+import AppOptions from '@/components/options/AppOptions.vue';
 import Shaft from '@/components/ShaftComponent.vue';
 
 export default {
   components: {
     AppOptions, Shaft,
-  },
-  data() {
-    return {
-
-    };
   },
 };
 </script>

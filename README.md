@@ -1,4 +1,8 @@
-# elevator
+# [Elevator Emulator](https://true-conf-tech-elevator-vuex.vercel.app/)
+
+- Options Api
+- Vuex
+- Supported multiple elevators
 
 ## Project setup
 ```

@@ -1,19 +1,29 @@
 <template>
   <div class="container">
     <div
-      v-for="count in floorsCount"
-      :key="count"
+      v-for="floor in floorsCount"
+      :key="floor.id"
       class="floor"
     >
-      <div class="floor__container">
+      <div
+        v-for="elevator in elevatorsCount"
+        :key="elevator.id"
+        class="floor__container"
+      >
         <Floor>
           <Elevator
-            v-if="count === 1"
+            v-if="floor.id === 1"
+            :id="elevator.id"
+            :status="elevator.status"
+            :direction="elevator.direction"
+            :elevatorStyle="elevator.style"
+            :headingToFloorNumber="elevator.headingToFloor"
           />
         </Floor>
       </div>
       <FloorControls
-      :floorNumber="count"
+      :floorNumber="floor.id"
+      :inQueue="floor.inQueue"
       />
     </div>
   </div>
@@ -23,15 +33,16 @@
 import Floor from '@/components/FloorComponent.vue';
 import Elevator from '@/components/ElevatorComponent.vue';
 import FloorControls from '@/components/FloorControls.vue';
-import { mapState } from 'vuex';
+import { mapGetters } from 'vuex';
 
 export default {
   components: {
     Floor, Elevator, FloorControls,
   },
   computed: {
-    ...mapState({
-      floorsCount: (state) => state.options.floorsCount,
+    ...mapGetters({
+      floorsCount: 'options/getFloorsCount',
+      elevatorsCount: 'options/getElevatorsCount',
     }),
   },
 };

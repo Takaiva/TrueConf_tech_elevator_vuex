@@ -4,9 +4,9 @@
     :style="elevatorStyle"
     :class="elevatorClass"
   >
-    <div class="elevator__direction" v-if="isPerformingTasks">
+    <div class="elevator__direction" v-if="showBoard">
       <span class="elevator__direction__floor-num">
-        {{ targetFloor }}
+        {{ headingToFloorNumber }}
       </span>
       <span
         class="elevator__direction__arrow"
@@ -25,22 +25,27 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
 
 export default {
+  props: {
+    id: Number,
+    status: String, // idle, moving, resting
+    direction: String || null, // up or down
+    elevatorStyle: Object, // style, class
+    headingToFloorNumber: Number,
+  },
   computed: {
-    ...mapGetters({
-      isPerformingTasks: 'getQueueStatus',
-      elevatorClass: 'elevator/getElevatorClass',
-      direction: 'elevator/getDirection',
-      elevatorStyle: 'elevator/getElevatorStyle',
-      targetFloor: 'elevator/getTargetFloor',
-    }),
+    showBoard() {
+      return this.status === 'moving';
+    },
+    elevatorClass() {
+      return this.status === 'resting' ? 'elevator_resting' : null;
+    },
   },
 };
 </script>
 
-<style scoped>
+<style>
 .elevator {
   position: relative;
   width: 100%;

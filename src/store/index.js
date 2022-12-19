@@ -1,16 +1,12 @@
-/* eslint-disable */
-
 import { createStore } from 'vuex';
-
-import elevatorModule from '@/store/elevator';
 import optionsModule from '@/store/options';
-import controlsModule from '@/store/controls';
+import _ from 'lodash';
 
 export default createStore({
   state() {
     return {
-      currentTargetFloor: 1,
       eventQueue: [],
+      performingTasks: false,
     };
   },
   getters: {
@@ -18,13 +14,10 @@ export default createStore({
       return state.eventQueue;
     },
     getNextEvent(state) {
-      return state.eventQueue[0];
+      return _.first(state.eventQueue);
     },
-    getCurrentFloor(state) {
-      return state.currentTargetFloor;
-    },
-    getQueueStatus(state) {
-      return state.eventQueue.length > 0;
+    isPerformingTasks(state) {
+      return state.performingTasks;
     },
   },
   mutations: {
@@ -34,36 +27,64 @@ export default createStore({
     removeEventFromQueue(state) {
       state.eventQueue.shift();
     },
-    setCurrentTargetFloor(state, payload) {
-      state.currentTargetFloor = payload;
+    setPerformingTasks(state, payload) {
+      state.performingTasks = payload;
     },
   },
   actions: {
-    performTasks({ getters, commit, dispatch }) {
-      if (!getters.getQueueStatus) {
-        commit('elevator/setStatus', 'idle');
+    performTask({ commit }, eventData) {
+      const {
+        elevatorId, direction, timeToMove, style, targetFloor,
+      } = eventData;
+      const payloadForMoving = {
+        elevatorId, direction, style, headingToFloor: targetFloor, status: 'moving',
+      };
+      const payloadForResting = {
+        elevatorId, onFloorNumber: targetFloor, headingToFloor: null, status: 'resting',
+      };
+      const payloadForIdle = {
+        elevatorId, status: 'idle', onFloorNumber: targetFloor, headingToFloor: null,
+      };
+      commit('options/setElevatorOptionsById', payloadForMoving);
+      setTimeout(() => {
+        commit('options/setElevatorOptionsById', payloadForResting);
+        setTimeout(() => {
+          commit('options/setElevatorOptionsById', payloadForIdle);
+          commit('options/setFloorInQueue', { id: targetFloor, inQueue: false });
+        }, 3000);
+      }, timeToMove);
+    },
+    performTasks({ commit, getters, dispatch }) {
+      if (getters.getEventQueue.length === 0) {
+        commit('setPerformingTasks', false);
         return;
       }
-      const {
-        style, direction, timeToMove, targetFloor, input,
-      } = getters.getNextEvent;
-      console.log(input);
-      commit('elevator/setElevatorStyle', style);
-      commit('elevator/setDirection', direction);
-      commit('elevator/setTargetFloor', targetFloor);
-      commit('elevator/setStatus', 'moving');
-      setTimeout(() => {
-        commit('elevator/setStatus', 'resting');
-        setTimeout(() => {
+      const { targetFloor } = getters.getNextEvent;
+      const intervalId = setInterval(() => {
+        const nearestIdleElevatorData = getters['options/getNearestIdleElevatorData'](targetFloor);
+        if (nearestIdleElevatorData) {
+          clearInterval(intervalId);
           commit('removeEventFromQueue');
+          const { elevatorId, direction, diff } = nearestIdleElevatorData;
+          const timeToMove = diff * 1000;
+          const style = {
+            transition: `transform ${diff}s linear 0s`,
+            transform: `translateY(-${121 * (targetFloor - 1)}px)`,
+          };
+          const eventData = {
+            elevatorId,
+            targetFloor,
+            direction,
+            timeToMove,
+            style,
+          };
+          dispatch('performTask', eventData);
           dispatch('performTasks');
-        }, 3000)
-      }, timeToMove);
+        }
+      }, 100);
     },
   },
   modules: {
-    elevator: elevatorModule,
     options: optionsModule,
-    controls: controlsModule,
   },
 });

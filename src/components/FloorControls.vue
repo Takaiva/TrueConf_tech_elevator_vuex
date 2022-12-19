@@ -4,76 +4,64 @@
     <div class="floor__control__num">{{ floorNumber }}</div>
       <input
       type="checkbox"
-      v-model="checked"
+      :checked="inQueue"
       :disabled="disabled"
       class="floor__control__custom-checkbox custom-checkbox"
-      :class="isElevatorHeading ? 'current-target_active' : null"
+      :class="isElevatorComing ? 'current-target_active' : null"
       :id="floorNumber"
       @click="callElevator"
     />
     <label :for="floorNumber">
       {{ floorStatus }}
-      {{ checked }}
     </label>
   </div>
 </template>
 
 <script>
 import {
-  mapState, mapMutations, mapActions,
+  mapMutations, mapActions, mapGetters,
 } from 'vuex';
 
 export default {
   props: {
     floorNumber: Number,
-  },
-  data() {
-    return {
-      checked: false,
-      isElevatorHeading: false,
-    };
+    inQueue: Boolean,
   },
   computed: {
-    ...mapState({
-      currentTargetFloor: (state) => state.currentTargetFloor,
+    ...mapGetters({
+      elevators: 'options/getElevatorsCount',
+      isPerformingTasks: 'isPerformingTasks',
     }),
     floorStatus() {
-      return this.checked ? 'Wait...' : 'Call';
+      return this.inQueue ? 'Wait...' : 'Call';
     },
     disabled() {
-      return this.floorNumber === this.currentTargetFloor || this.checked;
+      const isEveryElevatorOnThisFloor = this.elevators
+        .every((elevator) => elevator.onFloorNumber === this.floorNumber);
+      return isEveryElevatorOnThisFloor || this.inQueue;
     },
-    // eslint-disable-next-line
-    checked() {
-      return this.$store.state.controls.controls
-        .find((control) => control.id === this.floorNumber).checked;
+    isElevatorComing() {
+      return this.elevators
+        .some((elevator) => elevator.headingToFloor === this.floorNumber);
     },
   },
   methods: {
     ...mapMutations({
-      setCurrentTargetFloor: 'setCurrentTargetFloor',
       addEventToQueue: 'addEventToQueue',
-      setControlCheckedStatus: 'controls/setControlCheckedStatus',
+      setFloorInQueue: 'options/setFloorInQueue',
+      setPerformingTasks: 'setPerformingTasks',
     }),
     ...mapActions({
       performTasks: 'performTasks',
     }),
-    callElevator(event) {
-      const diff = this.floorNumber > this.currentTargetFloor
-        ? this.floorNumber - this.currentTargetFloor : this.currentTargetFloor - this.floorNumber;
-      const direction = this.floorNumber > this.currentTargetFloor ? 'up' : 'down';
-      const timeToMove = diff * 1000;
-      const style = {
-        transition: `transform ${diff}s linear 0s`,
-        transform: `translateY(-${121 * (this.floorNumber - 1)}px)`,
-      };
+    callElevator() {
       const targetFloor = this.floorNumber;
-      this.addEventToQueue({
-        style, direction, timeToMove, targetFloor, input: event.target,
-      });
-      this.setCurrentTargetFloor(this.floorNumber);
-      this.setControlCheckedStatus({ id: this.floorNumber, checked: true });
-      // this.performTasks();
+      this.addEventToQueue({ targetFloor });
+      this.setFloorInQueue({ id: this.floorNumber, inQueue: true });
+      if (!this.isPerformingTasks) {
+        this.setPerformingTasks(true);
+        this.performTasks();
+      }
     },
   },
 };
